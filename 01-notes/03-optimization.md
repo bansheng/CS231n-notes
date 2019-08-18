@@ -41,13 +41,13 @@
 
 ### 用微积分计算梯度
 
-1. 对正确类w_i
+1. **对正确类w_i 的梯度值要累加**
 
     ```math
     \nabla_{w_{y_i}} L_i = - \left( \sum_{j\neq y_i} \mathbb{1}(w_j^Tx_i - w_{y_i}^Tx_i + \Delta > 0) \right) x_i
     ```
 
-2. 对错误类w_j
+2. **对错误类w_j的梯度值不需要累加**
 
     ```math
     \nabla_{w_j} L_i = \mathbb{1}(w_j^Tx_i - w_{y_i}^Tx_i + \Delta > 0) x_i
