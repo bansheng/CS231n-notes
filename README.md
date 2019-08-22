@@ -14,3 +14,7 @@
 [08-整合到一起](./01-notes/08-put-it-together.md)
 
 ## module 2 卷积神经网络
+
+[CNN](./01-notes/09-CNN.md)
+[visulizing](./01-notes/10-Visualizing.md)
+[Transfer_Learning](./01-notes/11-Transfer_Learning.md)
