@@ -44,7 +44,7 @@
 
     ```math
     \sigma(x) = \frac{1}{1+e^{-x}} \\\\
-    \rightarrow \hspace{0.3in} \frac{d\sigma(x)}{dx} = \frac{e^{-x}}{(1+e^{-x})^2} = \left( \frac{1 + e^{-x} - 1}{1 + e^{-x}} \right) \left( \frac{1}{1+e^{-x}} \right) 
+    \rightarrow \hspace{0.3in} \frac{d\sigma(x)}{dx} = \frac{e^{-x}}{(1+e^{-x})^2} = \left( \frac{1 + e^{-x} - 1}{1 + e^{-x}} \right) \left( \frac{1}{1+e^{-x}} \right)
     = \left( 1 - \sigma(x) \right) \sigma(x)
     ```
 
@@ -55,3 +55,10 @@
 5. 导数值向后流动
     ![example2](../02-imgs/13-backpropagation_example2.png)
 6. 矢量的梯度
+
+    ```python
+    Y = x*w + b
+    dx = np.dot(dY, w.T)  # (N,D)
+    dw = np.dot(X.T, dY)  # (D,M)
+    db = np.sum(dY, axis=0)  # (M,)
+    ```

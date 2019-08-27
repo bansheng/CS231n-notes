@@ -55,7 +55,19 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        self.params['W1'] = weight_scale*np.random.randn(num_filters, input_dim[0], filter_size, filter_size)
+        self.params['b1'] = np.zeros(num_filters)
+        
+        # dimension of 1 flatten output of the conv-pool layer
+        conv_dim = (input_dim[1]//2)*(input_dim[2]//2)*num_filters #先到一个维度，之后再reshape
+        
+        # initialize the hidden affine layer weights
+        self.params['W2'] = weight_scale*np.random.randn(conv_dim, hidden_dim)
+        self.params['b2'] = np.zeros(hidden_dim)
+
+        # initialize the hidden affine layer weights
+        self.params['W3'] = weight_scale*np.random.randn(hidden_dim, num_classes)
+        self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -95,7 +107,16 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        A1, cache_A1 = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        
+        # reshape images to row vectors
+        A1_flatten = np.reshape(A1, (A1.shape[0], -1))
+        
+        # hidden affine layer
+        A2, cache_A2 = affine_relu_forward(A1_flatten, W2, b2)
+        
+        # output affine layer
+        scores, cache_Z3 = affine_forward(A2, W3, b3)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -118,7 +139,28 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        if y is not None:
+            # compute the loss
+            loss, dZ3 = softmax_loss(scores, y) 
+            # add regularization
+            loss += 0.5*self.reg*(np.sum(self.params['W1']**2) + np.sum(self.params['W2']**2) + np.sum(self.params['W3']**2))
+            
+            # compute the output layer backward pass
+            dA2, dW3, db3 = affine_backward(dZ3, cache_Z3)
+            # compute the hidden layer backward pass
+            dA1_flatten, dW2, db2 = affine_relu_backward(dA2, cache_A2)
+            # reshape the row vectors into images like gradient
+            dA1 = np.reshape(dA1_flatten, A1.shape)
+            # compute the convolutional layer backward pass
+            _, dW1, db1 = conv_relu_pool_backward(dA1, cache_A1)
+            
+            # store the gradients (with regularization)
+            grads['W1'] = dW1 + self.reg*self.params['W1']
+            grads['b1'] = db1
+            grads['W2'] = dW2 + self.reg*self.params['W2']
+            grads['b2'] = db2
+            grads['W3'] = dW3 + self.reg*self.params['W3']
+            grads['b3'] = db3
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
