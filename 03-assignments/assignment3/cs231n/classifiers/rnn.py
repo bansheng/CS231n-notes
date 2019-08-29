@@ -142,7 +142,47 @@ class CaptioningRNN(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # FORWARD PASS
+        
+        # step 1: initial hidden state from image features
+        h0 = np.dot(features, W_proj) + b_proj
+        
+        # step 2: word embedding
+        x, cache_embed = word_embedding_forward(captions_in, W_embed)
+        
+        # step 3: process sequence of inputs through vanilla RNN / LSTM
+        if self.cell_type == "rnn":
+            h, cache_rnn = rnn_forward(x, h0, Wx, Wh, b)
+        elif self.cell_type == "lstm":
+            h, cache_lstm = lstm_forward(x, h0, Wx, Wh, b)
+            
+        # step 4: (temporal) affine transformation to compute scores from the hidden states
+        scores, cache_affine = temporal_affine_forward(h, W_vocab, b_vocab)
+        
+        # step 5: softmax loss
+        loss, dscores = temporal_softmax_loss(scores, captions_out, mask)
+        
+        # BACKWARD PASS
+        
+        # step 4: affine weights gradients
+        dh, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_affine)
+        grads["W_vocab"], grads["b_vocab"] = dW_vocab, db_vocab
+        
+        # step 3: vanilla RNN / LSTM weights gradients
+        if self.cell_type == "rnn":
+            dx, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        elif self.cell_type == "lstm":
+            dx, dh0, dWx, dWh, db = lstm_backward(dh, cache_lstm)
+        grads["Wx"], grads["Wh"], grads["b"] = dWx, dWh, db
+
+        # step 2: word embeddings gradients
+        dW_embed = word_embedding_backward(dx, cache_embed)
+        grads["W_embed"] = dW_embed
+        
+        # step 1: projection weights gradients
+        dW_proj, db_proj = np.dot(features.T, dh0), np.sum(dh0, axis=0)        
+        grads["W_proj"] = dW_proj
+        grads["b_proj"] = db_proj
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -211,7 +251,29 @@ class CaptioningRNN(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # initialization 
+        h, _ = affine_forward(features, W_proj, b_proj) # initial hidden states from image features
+        captions[:, 0] = self._start # start token
+        
+        if self.cell_type == "lstm":
+            c = np.zeros(h.shape)
+        
+        # sampling loop
+        for t in range(max_length-1):
+            # step 1: word embeddings
+            x = W_embed[captions[:, t], :]
+            
+            # step 2: vanilla RNN / LSTM step
+            if self.cell_type == "rnn":
+                h, _ = rnn_step_forward(x, h, Wx, Wh, b)
+            elif self.cell_type == "lstm":
+                h, c, _ = lstm_step_forward(x, h, c, Wx, Wh, b)
+            
+            # step 3: affine transformation to compute scores from the hidden states
+            scores, _ = affine_forward(h, W_vocab, b_vocab)
+            
+            # step 4: sampling words with highest scores
+            captions[:, t+1] = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
